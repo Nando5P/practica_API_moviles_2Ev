@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.gestionusuarioshibrido.data.local.User
 import com.example.gestionusuarioshibrido.ui.components.UserCard
 
@@ -61,5 +62,52 @@ fun UserListScreen(
     onAddTestUser: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    throw UnsupportedOperationException("A completar por el estudiante")
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Lista de usuarios") },
+                actions = {
+                    // Botón Sincronizar (Llama a onSync)
+                    IconButton(onClick = onSync) {
+                        Icon(
+                            imageVector = Icons.Rounded.Sync,
+                            contentDescription = "Sincronizar"
+                        )
+                    }
+                    // Botón Añadir Usuario de Prueba (Llama a onAddTestUser)
+                    IconButton(onClick = onAddTestUser) {
+                        Icon(
+                            imageVector = Icons.Rounded.PersonAdd,
+                            contentDescription = "Añadir Test"
+                        )
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddUser) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "Crear Usuario"
+                )
+            }
+        }
+    ) { innerPadding ->
+        // Lista de Usuarios
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            items(users) { user ->
+                UserCard(
+                    user = user,
+                    onEditUser = { onEditUser(user.id) }, // Cambio de nombre aquí
+                    onDeleteUser = { onDeleteUser(user) }, // Cambio de nombre aquí
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
 }

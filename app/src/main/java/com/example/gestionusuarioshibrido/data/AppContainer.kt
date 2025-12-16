@@ -13,23 +13,24 @@ interface AppContainer {
     val userRepository: UserRepository
 }
 
-class DefaultAppContainer(private val context: Context) : AppContainer {
+// CORRECCIÓN 1: Cambiado nombre de DefaultAppContainer a AppDataContainer
+class AppDataContainer(private val context: Context) : AppContainer {
 
-    // MockAPI base URL
+    // 1. Configuración de la Base URL
     private val BASE_URL = "https://692602c626e7e41498f90a61.mockapi.io/api/wirtz/"
 
-    // Configuración de Retrofit con Kotlinx Serialization
+    // 2. Configuración de Retrofit
     private val retrofit: Retrofit = Retrofit.Builder()
         .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
         .baseUrl(BASE_URL)
         .build()
 
-    // Servicio de red MockApiService
+    // 3. Servicio API
     private val retrofitService: MockApiService by lazy {
         retrofit.create(MockApiService::class.java)
     }
 
-    // Base de datos Room
+    // 4. Base de Datos Local
     private val database: UserDatabase by lazy {
         Room.databaseBuilder(
             context,
@@ -38,11 +39,12 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         ).build()
     }
 
-    // Repositorio de usuarios
+    // 5. Inyección de Dependencias
     override val userRepository: UserRepository by lazy {
+        // CORRECCIÓN 2: Usamos los nombres de parámetros correctos (local y remote)
         DefaultUserRepository(
-            userDao = database.userDao(),
-            networkService = retrofitService
+            local = database.userDao(),
+            remote = retrofitService
         )
     }
 }

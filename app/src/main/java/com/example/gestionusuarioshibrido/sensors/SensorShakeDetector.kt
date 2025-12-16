@@ -24,45 +24,59 @@ class SensorShakeDetector(
     // Último tiempo registrado para evitar múltiples eventos seguidos
     private var lastShakeTime = 0L
 
+    // Umbral de fuerza G (2.7 veces la gravedad)
+    private val SHAKE_THRESHOLD_GRAVITY = 2.7F
+    // Tiempo de espera entre sacudidas (ms)
+    private val SHAKE_SLOP_TIME_MS = 500
+
     /**
      * Registra el listener del acelerómetro.
      */
     fun start() {
-        throw UnsupportedOperationException("A completar por el estudiante")
+        accelerometer?.let {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+        }
     }
 
     /**
      * Detiene el listener del acelerómetro.
      */
     fun stop() {
-        throw UnsupportedOperationException("A completar por el estudiante")
+        sensorManager.unregisterListener(this)
     }
 
     /**
      * Maneja los eventos generados por el acelerómetro.
-     *
-     * Esta función se ejecuta automáticamente cada vez que el sensor detecta
-     * cambios en la aceleración del dispositivo. Su objetivo es calcular la
-     * fuerza G total y determinar si el usuario ha realizado una sacudida.
-     *
-     * Flujo de funcionamiento:
-     * 1. Se obtiene la aceleración en los ejes X, Y y Z.
-     * 2. Cada eje se normaliza dividiendo entre la gravedad estándar (9.81 m/s²),
-     *    lo que convierte la aceleración en "fuerza G".
-     * 3. Se calcula la magnitud del vector (fuerza total en G).
-     * 4. Si la fuerza supera el umbral definido (`shakeThreshold`) y ha pasado
-     *    suficiente tiempo desde la última detección, se considera una sacudida
-     *    válida y se llama a `onShake()`.
-     *
-     * @param event Objeto con la información del sensor, incluyendo los valores
-     *              de aceleración en cada eje. Si es null, la función se detiene.
      */
-
     override fun onSensorChanged(event: SensorEvent?) {
-        throw UnsupportedOperationException("A completar por el estudiante")
+        if (event == null) return
+
+        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+            val x = event.values[0]
+            val y = event.values[1]
+            val z = event.values[2]
+
+            // Normalizar dividiendo por la gravedad para obtener fuerza G
+            val gX = x / SensorManager.GRAVITY_EARTH
+            val gY = y / SensorManager.GRAVITY_EARTH
+            val gZ = z / SensorManager.GRAVITY_EARTH
+
+            // Calcular fuerza total
+            val gForce = sqrt(gX * gX + gY * gY + gZ * gZ)
+
+            // Validar umbral y tiempo de espera
+            if (gForce > SHAKE_THRESHOLD_GRAVITY) {
+                val now = System.currentTimeMillis()
+                // Evitar rebotes (múltiples llamadas en la misma sacudida)
+                if (lastShakeTime + SHAKE_SLOP_TIME_MS < now) {
+                    lastShakeTime = now
+                    onShake()
+                }
+            }
+        }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        throw UnsupportedOperationException("A completar por el estudiante")
+        // No es necesario implementar nada aquí
     }
 }

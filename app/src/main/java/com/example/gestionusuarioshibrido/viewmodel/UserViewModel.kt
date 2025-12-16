@@ -1,25 +1,23 @@
 package com.example.gestionusuarioshibrido.viewmodel
 
-import android.content.Context
-import androidx.core.os.registerForAllProfilingResults
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.gestionusuarioshibrido.GestionUsuariosApplication
 import com.example.gestionusuarioshibrido.data.RepositoryResult
-import com.example.gestionusuarioshibrido.data.local.User
 import com.example.gestionusuarioshibrido.data.UserRepository
-import com.example.gestionusuarioshibrido.data.testUsers
-import com.example.gestionusuarioshibrido.sensors.ShakeUserCoordinator
-import kotlinx.coroutines.channels.Channel
+import com.example.gestionusuarioshibrido.data.local.User
+// Asegúrate de que este import coincida con TU clase Application del AndroidManifest
+import com.example.gestionusuarioshibrido.GestionUsuariosApplication
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 /**
  * ViewModel responsable de gestionar la lógica de presentación relacionada con usuarios.
@@ -30,129 +28,106 @@ import kotlinx.coroutines.launch
  *
  * @property userRepository Repositorio híbrido que gestiona acceso local y remoto.
  */
-class UserViewModel(private val userRepository: UserRepository) : ViewModel() {
-    /**
-     * Canal privado para emitir eventos puntuales hacia la UI
-     * (mensajes Toast, SnackBars, etc.).
-     */
-    private val _events = Channel<String>()
-    /**
-     * Flujo público de eventos que la UI observará.
-     */
-    val events = _events.receiveAsFlow()
+class UserViewModel(private val repository: UserRepository) : ViewModel() {
 
-    /**
-     * Contador de usuarios de prueba que ya se han insertado.
-     */
-    private var usersAddedCount = 0
+    // Estado de la lista de usuarios
+    val users: StateFlow<List<User>> = repository.getAllUsersStream()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
-    /**
-     * Coordinador encargado de escuchar el gesto shake del dispositivo
-     * y notificar al ViewModel para realizar la sincronización.
-     */
-    private var shakeUserCoordinator: ShakeUserCoordinator? = null
+    // Flujo para enviar mensajes a la UI (Toast/Snackbar)
+    private val _message = MutableSharedFlow<String>()
+    val message: SharedFlow<String> = _message.asSharedFlow()
 
-    /**
-     * Flujo observable de usuarios, proveniente del repositorio.
-     * Utiliza `stateIn` para mantener un estado interno que persiste
-     * mientras la UI esté suscrita.
-     */
-    val users: StateFlow<List<User>> = userRepository.getAllUsersStream()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    // --- OPERACIONES CRUD ---
 
-    /**
-     * Inserta un usuario en el repositorio y procesa el resultado,
-     * enviando un mensaje a la UI si es necesario.
-     *
-     * @param user Usuario a insertar.
-     */
-    fun insertUser(user: User) = viewModelScope.launch {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
+    fun insertUser(user: User) {
+        viewModelScope.launch {
+            // Si es nuevo (ID vacío), generamos ID temporal local
+            val userToSave = if (user.id.isBlank()) {
+                user.copy(id = "local_${System.nanoTime()}")
+            } else {
+                user
+            }
 
-    /**
-     * Actualiza un usuario existente en el repositorio y notifica el resultado.
-     *
-     * @param user Usuario actualizado.
-     */
-    fun updateUser(user: User) = viewModelScope.launch {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
-
-    /**
-     * Marca un usuario para borrado (soft-delete) y procesa la respuesta.
-     *
-     * @param user Usuario a eliminar.
-     */
-    fun deleteUser(user: User) = viewModelScope.launch {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
-
-    /**
-     * Inicializa el listener del gesto de agitar el dispositivo (shake)
-     * si aún no está configurado. Este gesto permite añadir usuarios de prueba.
-     *
-     * @param context Contexto necesario para registrar los sensores.
-     */
-    fun setupShakeListener(context: Context) {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
-
-    /**
-     * Limpia los listeners del sensor al destruir el ViewModel.
-     */
-
-    override fun onCleared() {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
-
-
-    /**
-     * Añade un usuario de prueba de la lista `testUsers`.
-     * Envía un mensaje informando el número restante de usuarios disponibles.
-     */
-
-    fun addTestUser() = viewModelScope.launch {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
-
-    /**
-     * Ejecuta la sincronización híbrida completa:
-     *
-     * 1. Sube cambios pendientes del cliente → servidor (altas, modificaciones y borrados).
-     * 2. Descarga el estado más reciente del servidor → cliente.
-     *
-     * Tras cada fase, procesa el resultado y lo comunica a la UI.
-     */
-    fun sync() = viewModelScope.launch {
-        throw UnsupportedOperationException("A completar por el estudiante")
-    }
-
-    /**
-     * Procesa un resultado del repositorio, enviando a la UI el mensaje apropiado.
-     *
-     * @param result Resultado devuelto por el repositorio.
-     */
-    private suspend fun processResult(result: RepositoryResult) {
-        when (result) {
-            is RepositoryResult.Success ->
-                _events.send(result.message)
-
-            is RepositoryResult.Error ->
-                _events.send("${result.message} ${result.exception?.message ?: ""}".trim())
+            val result = repository.insertUser(userToSave)
+            handleResult(result)
         }
     }
 
-    /**
-     * Factoría para crear instancias de [UserViewModel] utilizando el contenedor
-     * de dependencias de la aplicación.
-     */
+    fun updateUser(user: User) {
+        viewModelScope.launch {
+            val result = repository.updateUser(user)
+            handleResult(result)
+        }
+    }
+
+    fun deleteUser(user: User) {
+        viewModelScope.launch {
+            val result = repository.deleteUser(user)
+            handleResult(result)
+        }
+    }
+
+    // --- LÓGICA DE TEST (Generación dinámica para el vídeo) ---
+
+    fun addTestUser() {
+        // Generamos un usuario aleatorio al vuelo para cumplir el requisito
+        val randomId = System.nanoTime()
+        val testUser = User(
+            id = "local_$randomId",
+            firstName = "Test",
+            lastName = "User ${Random.nextInt(1, 100)}",
+            email = "test$randomId@example.com",
+            age = Random.nextInt(18, 90),
+            userName = "user_test",
+            positionTitle = "Tester",
+            imagen = "https://randomuser.me/api/portraits/lego/${Random.nextInt(1, 9)}.jpg",
+            pendingSync = true,
+            pendingDelete = false
+        )
+        insertUser(testUser)
+    }
+
+    // --- SINCRONIZACIÓN ---
+
+    fun sync() {
+        viewModelScope.launch {
+            _message.emit("Iniciando sincronización...")
+
+            // 1. Subir cambios
+            val uploadResult = repository.uploadPendingChanges()
+            if (uploadResult is RepositoryResult.Error) {
+                _message.emit("Error subiendo: ${uploadResult.message}")
+                return@launch
+            }
+
+            // 2. Descargar cambios
+            val downloadResult = repository.syncFromServer()
+
+            when (downloadResult) {
+                is RepositoryResult.Success -> _message.emit(downloadResult.message)
+                is RepositoryResult.Error -> _message.emit("Error descargando: ${downloadResult.message}")
+            }
+        }
+    }
+
+    private suspend fun handleResult(result: RepositoryResult) {
+        if (result is RepositoryResult.Error) {
+            _message.emit(result.message)
+        }
+    }
+
+    // --- FACTORY ---
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val application = (this[APPLICATION_KEY] as GestionUsuariosApplication)
-                val userRepository = application.container.userRepository
-                UserViewModel(userRepository = userRepository)
+                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as com.example.gestionusuarioshibrido.GestionUsuariosApplication)
+                val repository = application.container.userRepository
+                UserViewModel(repository)
             }
         }
     }

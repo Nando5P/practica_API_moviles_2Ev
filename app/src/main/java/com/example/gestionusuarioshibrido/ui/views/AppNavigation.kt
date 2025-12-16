@@ -1,24 +1,19 @@
 package com.example.gestionusuarioshibrido.ui.views
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.gestionusuarioshibrido.sensors.ShakeUserCoordinator
 import com.example.gestionusuarioshibrido.viewmodel.UserViewModel
 
 
@@ -43,65 +38,76 @@ import com.example.gestionusuarioshibrido.viewmodel.UserViewModel
  */
 
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier) {
+fun AppNavigation(viewModel: UserViewModel) {
 
-    // Obtenemos el Contexto
+    val navController = rememberNavController()
+    // Observamos la lista de usuarios desde el ViewModel
+    val users by viewModel.users.collectAsState()
     val context = LocalContext.current
 
-    // Controlador de navegación
-    val navController = rememberNavController()
-
-    // ViewModel de usuarios
-    val userViewModel: UserViewModel = viewModel(factory = UserViewModel.Factory)
-    val users by userViewModel.users.collectAsState()
-
-    // Iniciamos el coordinador del sensor en el UserViewModel
-    // Este se detendrá automáticamente cuando el ViewModel se destruya (onCleared)
-    userViewModel.setupShakeListener(context)
-
-    // Implementamos un SnackbarHostState para mostrar mensajes al usuario
-    // Se mostrarán mensajes a medida que el ViewModel los envíe
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(snackbarHostState) {
-        userViewModel.events.collect { message ->
-            snackbarHostState.showSnackbar(message = message,duration = SnackbarDuration.Short)
+    // Escuchar mensajes globales (Toasts de sincronización, errores, etc.)
+    LaunchedEffect(Unit) {
+        viewModel.message.collect { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
     }
 
-    Scaffold(
-        snackbarHost = {SnackbarHost(hostState = snackbarHostState)},
-        modifier = modifier
-    ) { paddingValues ->
-        val paddingModifier = Modifier.padding(paddingValues)
-        NavHost(
-            navController = navController, startDestination = "user_list"
-        ) {
+    // Definición del Grafo de Navegación
+    NavHost(navController = navController, startDestination = "userList") {
 
-            // ---------------------------
-            // Pantalla: Lista de usuarios
-            // ---------------------------
-            composable(route = "user_list") {
-                throw UnsupportedOperationException("A completar por el estudiante")
+        // --- RUTA 1: PANTALLA DE LISTA ---
+        composable("userList") {
+            // Configuración del Sensor de Sacudida (Solo activo en esta pantalla)
+            val sensorCoordinator = remember {
+                ShakeUserCoordinator(context, viewModel)
             }
 
-            // ----------------------------------------
-            // Pantalla: Formulario para crear usuario
-            // ----------------------------------------
-            composable(route = "user_form") {
-                throw UnsupportedOperationException("A completar por el estudiante")
+            // Ciclo de vida del sensor: Start al entrar, Stop al salir
+            DisposableEffect(Unit) {
+                sensorCoordinator.startListening()
+                onDispose { sensorCoordinator.stopListening() }
             }
 
-            // ----------------------------------------
-            // Pantalla: Formulario para editar usuario
-            // ----------------------------------------
-            composable(
-                route = "user_form/{id}",
-                arguments = listOf(navArgument("id") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getString("id")
-                throw UnsupportedOperationException("A completar por el estudiante")
-            }
+            // Renderizar pantalla de lista
+            UserListScreen(
+                users = users,
+                onAddUser = { navController.navigate("userForm_create") }, // Ir a crear
+                onEditUser = { userId -> navController.navigate("userForm_edit/$userId") }, // Ir a editar
+                onDeleteUser = { user -> viewModel.deleteUser(user) },
+                onSync = { viewModel.sync() },
+                onAddTestUser = { viewModel.addTestUser() }
+            )
+        }
+
+        // --- RUTA 2: PANTALLA DE CREACIÓN (Sin ID) ---
+        composable("userForm_create") {
+            UserFormScreen(
+                users = users,
+                userId = null, // null indica creación
+                onDone = { newUser ->
+                    viewModel.insertUser(newUser)
+                    navController.popBackStack() // Volver a la lista
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // --- RUTA 3: PANTALLA DE EDICIÓN (Con ID) ---
+        composable(
+            route = "userForm_edit/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")
+
+            UserFormScreen(
+                users = users,
+                userId = userId, // Pasamos el ID para cargar datos
+                onDone = { updatedUser ->
+                    viewModel.updateUser(updatedUser)
+                    navController.popBackStack() // Volver a la lista
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
