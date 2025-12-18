@@ -24,8 +24,8 @@ class SensorShakeDetector(
     // Último tiempo registrado para evitar múltiples eventos seguidos
     private var lastShakeTime = 0L
 
-    // Umbral de fuerza G (2.7 veces la gravedad)
-    private val SHAKE_THRESHOLD_GRAVITY = 2.7F
+    // Umbral de fuerza G (1.3 veces la gravedad)
+    private val SHAKE_THRESHOLD_GRAVITY = 1.3F
     // Tiempo de espera entre sacudidas (ms)
     private val SHAKE_SLOP_TIME_MS = 500
 

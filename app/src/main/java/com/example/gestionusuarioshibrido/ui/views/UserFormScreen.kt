@@ -112,7 +112,6 @@ fun UserEditScreen(
     var age by remember { mutableStateOf(existingUser?.age?.toString() ?: "") }
     var userName by remember { mutableStateOf(existingUser?.userName ?: "") }
     var positionTitle by remember { mutableStateOf(existingUser?.positionTitle ?: "") }
-    // Imagen por defecto si es nuevo, o la que tenga el usuario
     var imagenUrl by remember { mutableStateOf(existingUser?.imagen ?: "https://randomuser.me/api/portraits/lego/1.jpg") }
 
     LaunchedEffect(existingUser) {
@@ -159,7 +158,6 @@ fun UserEditScreen(
         OutlinedTextField(
             value = age,
             onValueChange = { input ->
-                // Solo permitimos números
                 if (input.all { it.isDigit() }) age = input
             },
             label = { Text("Edad") },
@@ -192,7 +190,7 @@ fun UserEditScreen(
 
         Button(
             modifier = Modifier.fillMaxWidth(),
-            enabled = firstName.isNotBlank() && lastName.isNotBlank(), // Validación básica
+            enabled = firstName.isNotBlank() && lastName.isNotBlank(),
             onClick = {
                 val userToSave = User(
                     id = existingUser?.id ?: "",
