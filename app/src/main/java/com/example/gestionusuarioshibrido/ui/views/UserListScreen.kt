@@ -68,14 +68,14 @@ fun UserListScreen(
             TopAppBar(
                 title = { Text(text = "Lista de usuarios") },
                 actions = {
-                    // Botón Sincronizar (Llama a onSync)
+                    // Botón Sincronizar
                     IconButton(onClick = onSync) {
                         Icon(
                             imageVector = Icons.Rounded.Sync,
                             contentDescription = "Sincronizar"
                         )
                     }
-                    // Botón Añadir Usuario de Prueba (Llama a onAddTestUser)
+                    // Botón Añadir Usuario de Prueba
                     IconButton(onClick = onAddTestUser) {
                         Icon(
                             imageVector = Icons.Rounded.PersonAdd,
@@ -103,8 +103,8 @@ fun UserListScreen(
             items(users) { user ->
                 UserCard(
                     user = user,
-                    onEditUser = { onEditUser(user.id) }, // Cambio de nombre aquí
-                    onDeleteUser = { onDeleteUser(user) }, // Cambio de nombre aquí
+                    onEditUser = { onEditUser(user.id) },
+                    onDeleteUser = { onDeleteUser(user) },
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }

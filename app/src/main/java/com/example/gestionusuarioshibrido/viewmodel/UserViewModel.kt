@@ -38,15 +38,11 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    // Flujo para enviar mensajes a la UI (Toast/Snackbar)
     private val _message = MutableSharedFlow<String>()
     val message: SharedFlow<String> = _message.asSharedFlow()
 
-    // --- OPERACIONES CRUD ---
-
     fun insertUser(user: User) {
         viewModelScope.launch {
-            // Si es nuevo (ID vacío), generamos ID temporal local
             val userToSave = if (user.id.isBlank()) {
                 user.copy(id = "local_${System.nanoTime()}")
             } else {
@@ -72,10 +68,8 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    // --- LÓGICA DE TEST (Generación dinámica para el vídeo) ---
-
+    // Generamos un usuario aleatorio
     fun addTestUser() {
-        // Generamos un usuario aleatorio al vuelo para cumplir el requisito
         val randomId = System.nanoTime()
         val testUser = User(
             id = "local_$randomId",
@@ -92,8 +86,6 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         insertUser(testUser)
     }
 
-    // --- SINCRONIZACIÓN ---
-
     fun sync() {
         viewModelScope.launch {
             _message.emit("Iniciando sincronización...")
@@ -105,7 +97,6 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
                 return@launch
             }
 
-            // 2. Descargar cambios
             val downloadResult = repository.syncFromServer()
 
             when (downloadResult) {
@@ -121,7 +112,6 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    // --- FACTORY ---
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

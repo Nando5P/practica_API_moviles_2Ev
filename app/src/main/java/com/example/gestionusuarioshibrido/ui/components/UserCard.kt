@@ -58,7 +58,7 @@ fun UserCard(
             Row (horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()) {
-                // FOTO DEL USUARIO
+                // Foto usuario
                 AsyncImage(
                     model = ImageRequest.Builder(context = LocalContext.current)
                         .data(user.imagen)

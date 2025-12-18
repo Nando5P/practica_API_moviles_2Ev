@@ -41,34 +41,29 @@ import com.example.gestionusuarioshibrido.viewmodel.UserViewModel
 fun AppNavigation(viewModel: UserViewModel) {
 
     val navController = rememberNavController()
-    // Observamos la lista de usuarios desde el ViewModel
     val users by viewModel.users.collectAsState()
     val context = LocalContext.current
 
-    // Escuchar mensajes globales (Toasts de sincronización, errores, etc.)
     LaunchedEffect(Unit) {
         viewModel.message.collect { msg ->
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Definición del Grafo de Navegación
     NavHost(navController = navController, startDestination = "userList") {
 
-        // --- RUTA 1: PANTALLA DE LISTA ---
+        // RUTA: Lista de Usuarios
         composable("userList") {
-            // Configuración del Sensor de Sacudida (Solo activo en esta pantalla)
             val sensorCoordinator = remember {
                 ShakeUserCoordinator(context, viewModel)
             }
 
-            // Ciclo de vida del sensor: Start al entrar, Stop al salir
+            // Iniciar y detener el listener de shake
             DisposableEffect(Unit) {
                 sensorCoordinator.startListening()
                 onDispose { sensorCoordinator.stopListening() }
             }
 
-            // Renderizar pantalla de lista
             UserListScreen(
                 users = users,
                 onAddUser = { navController.navigate("userForm_create") }, // Ir a crear
@@ -79,20 +74,20 @@ fun AppNavigation(viewModel: UserViewModel) {
             )
         }
 
-        // --- RUTA 2: PANTALLA DE CREACIÓN (Sin ID) ---
+        // RUTA: Pantalla de Creación
         composable("userForm_create") {
             UserFormScreen(
                 users = users,
-                userId = null, // null indica creación
+                userId = null,
                 onDone = { newUser ->
                     viewModel.insertUser(newUser)
-                    navController.popBackStack() // Volver a la lista
+                    navController.popBackStack() // Volver
                 },
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // --- RUTA 3: PANTALLA DE EDICIÓN (Con ID) ---
+        // RUTA 3: Pantalla de Edición
         composable(
             route = "userForm_edit/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
@@ -101,10 +96,10 @@ fun AppNavigation(viewModel: UserViewModel) {
 
             UserFormScreen(
                 users = users,
-                userId = userId, // Pasamos el ID para cargar datos
+                userId = userId,
                 onDone = { updatedUser ->
                     viewModel.updateUser(updatedUser)
-                    navController.popBackStack() // Volver a la lista
+                    navController.popBackStack()
                 },
                 onBack = { navController.popBackStack() }
             )

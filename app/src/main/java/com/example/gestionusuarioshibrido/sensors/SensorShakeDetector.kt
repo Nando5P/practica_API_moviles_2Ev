@@ -56,7 +56,7 @@ class SensorShakeDetector(
             val y = event.values[1]
             val z = event.values[2]
 
-            // Normalizar dividiendo por la gravedad para obtener fuerza G
+            // Normalizar valores de aceleración con respecto a la gravedad terrestre
             val gX = x / SensorManager.GRAVITY_EARTH
             val gY = y / SensorManager.GRAVITY_EARTH
             val gZ = z / SensorManager.GRAVITY_EARTH
@@ -64,10 +64,8 @@ class SensorShakeDetector(
             // Calcular fuerza total
             val gForce = sqrt(gX * gX + gY * gY + gZ * gZ)
 
-            // Validar umbral y tiempo de espera
             if (gForce > SHAKE_THRESHOLD_GRAVITY) {
                 val now = System.currentTimeMillis()
-                // Evitar rebotes (múltiples llamadas en la misma sacudida)
                 if (lastShakeTime + SHAKE_SLOP_TIME_MS < now) {
                     lastShakeTime = now
                     onShake()
@@ -77,6 +75,6 @@ class SensorShakeDetector(
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // No es necesario implementar nada aquí
+        // No se necesita implementar
     }
 }

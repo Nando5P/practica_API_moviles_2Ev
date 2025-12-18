@@ -101,12 +101,11 @@ fun UserEditScreen(
     onDone: (User) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 1. Identificar si es edición y buscar el usuario actual
+    // Identificar si es edición y buscar el usuario actual
     val existingUser = remember(userId, users) {
         users.find { it.id == userId }
     }
 
-    // 2. Estados de los campos (se inicializan con datos del usuario o vacíos)
     var firstName by remember { mutableStateOf(existingUser?.firstName ?: "") }
     var lastName by remember { mutableStateOf(existingUser?.lastName ?: "") }
     var email by remember { mutableStateOf(existingUser?.email ?: "") }
@@ -116,7 +115,6 @@ fun UserEditScreen(
     // Imagen por defecto si es nuevo, o la que tenga el usuario
     var imagenUrl by remember { mutableStateOf(existingUser?.imagen ?: "https://randomuser.me/api/portraits/lego/1.jpg") }
 
-    // Actualizar estados si cambia el existingUser (útil si la lista se recarga)
     LaunchedEffect(existingUser) {
         if (existingUser != null) {
             firstName = existingUser.firstName
@@ -133,7 +131,7 @@ fun UserEditScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState()), // Scroll por si el teclado tapa
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         OutlinedTextField(
@@ -196,9 +194,7 @@ fun UserEditScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = firstName.isNotBlank() && lastName.isNotBlank(), // Validación básica
             onClick = {
-                // 3. Crear el objeto User
                 val userToSave = User(
-                    // Si existingUser es null, pasamos ID vacío "" para que el ViewModel genere uno nuevo
                     id = existingUser?.id ?: "",
                     firstName = firstName,
                     lastName = lastName,
@@ -207,8 +203,7 @@ fun UserEditScreen(
                     userName = userName,
                     positionTitle = positionTitle,
                     imagen = imagenUrl,
-                    // Requisitos de sincronización:
-                    pendingSync = true,   //  Siempre true al guardar localmente
+                    pendingSync = true,
                     pendingDelete = false
                 )
                 onDone(userToSave)
