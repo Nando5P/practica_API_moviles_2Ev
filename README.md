@@ -2,7 +2,7 @@
 
 Hola, soy **Fernando**. Este es mi proyecto para el módulo de Programación Multimedia. Se trata de una aplicación Android que resuelve un problema muy común: **¿cómo hacer que una app siga funcionando cuando no hay internet?**
 
-He desarrollado una solución completa que permite gestionar usuarios en local y sincronizarlos con la nube automáticamente cuando recuperamos la conexión o mediante gestos.
+En esta práctica se desarrolla una solución completa que permite gestionar usuarios en local y sincronizarlos con la nube automáticamente cuando recuperamos la conexión o mediante gestos.
 
 ---
 
@@ -12,7 +12,7 @@ Lo más importante no es solo que muestra una lista de usuarios, sino cómo gest
 
 * **Funcionamiento 100% Offline:** Puedes crear, editar y borrar usuarios en "Modo Avión". La app guarda todo en una base de datos local (Room) y no se queja.
 * **Sincronización Inteligente:** La app sabe qué cambios has hecho mientras estabas desconectado y los sube al servidor (MockAPI) cuando sincronizas.
-* **Sensor de Sacudida (Shake):** 📳 He implementado una función divertida: si agitas el móvil con fuerza, la app detecta el movimiento con el acelerómetro y lanza la sincronización.
+* **Sensor de Sacudida (Shake):** 📳 Si agitas el móvil con fuerza, la app detecta el movimiento con el acelerómetro y lanza la sincronización.
 * **Usuarios de Prueba:** He añadido un botón para generar usuarios aleatorios rápidamente y facilitar las pruebas.
 
 ---
@@ -21,8 +21,8 @@ Lo más importante no es solo que muestra una lista de usuarios, sino cómo gest
 
 Para este proyecto he apostado por una arquitectura moderna basada en **Jetpack Compose** y **MVVM**:
 
-* **Lenguaje:** Kotlin (obviamente).
-* **Interfaz (UI):** Jetpack Compose y Material Design 3. Nada de XML.
+* **Lenguaje:** Kotlin.
+* **Interfaz (UI):** Jetpack Compose y Material Design 3.
 * **Base de Datos Local:** Room (SQLite) para la persistencia.
 * **Red:** Retrofit + Kotlin Serialization para conectar con la API.
 * **Imágenes:** Coil 3 para cargar los avatares.
