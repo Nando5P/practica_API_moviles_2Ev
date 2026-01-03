@@ -69,7 +69,7 @@ app/src/main/java/com/example/gestionusuarioshibrido/
 └── sensors/                 # Lógica del acelerómetro
     ├── SensorShakeDetector.kt
     └── ShakeUserCoordinator.kt
-
+```
 
 ---
 
